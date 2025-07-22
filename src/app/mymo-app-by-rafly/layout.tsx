@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "Pelacak kebiasaan dengan AI coach personal",
 };
 
-export default function MainLayout({
+export default function MyMoLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
