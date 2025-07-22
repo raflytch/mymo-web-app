@@ -1,0 +1,123 @@
+// Schema Prisma untuk aplikasi MyMo - AI Habit Tracker
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Model User untuk autentikasi manual
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String // Password yang sudah di-hash
+  avatar    String? // URL avatar dari ImageKit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi
+  habits      Habit[]
+  entries     Entry[]
+  reflections Reflection[]
+  aiCoachLogs AiCoachLog[]
+  otpCodes    OtpCode[]
+
+  @@map("users")
+}
+
+// Model OTP untuk reset password dan delete account
+model OtpCode {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String // Email tujuan OTP
+  code      String // Kode OTP (6 digit)
+  type      String // "RESET_PASSWORD" atau "DELETE_ACCOUNT"
+  used      Boolean  @default(false)
+  expiresAt DateTime // Waktu kadaluarsa (biasanya 10 menit)
+  createdAt DateTime @default(now())
+
+  // Relasi
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([email, code, type]) // Kombinasi unique untuk keamanan
+  @@map("otp_codes")
+}
+
+// Model Habit untuk tracking kebiasaan
+model Habit {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  color       String   @default("#3B82F6") // Warna hex untuk UI
+  frequency   String   @default("daily") // daily, weekly, custom
+  targetCount Int      @default(1) // Target per periode
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relasi
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries Entry[]
+
+  @@map("habits")
+}
+
+// Model Entry untuk tracking harian
+model Entry {
+  id        String   @id @default(cuid())
+  userId    String
+  habitId   String
+  date      DateTime @db.Date // Simpan tanggal saja
+  completed Boolean  @default(false)
+  count     Int      @default(1) // Berapa kali dilakukan hari itu
+  note      String? // Catatan opsional
+  photoUrl  String? // URL foto dari ImageKit
+  createdAt DateTime @default(now())
+
+  // Relasi
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, habitId, date]) // Satu entry per habit per hari
+  @@map("entries")
+}
+
+// Model Reflection untuk jurnal mingguan AI
+model Reflection {
+  id        String   @id @default(cuid())
+  userId    String
+  weekStart DateTime @db.Date // Tanggal awal minggu
+  prompt    String // Pertanyaan dari AI
+  response  String? // Jawaban user
+  aiInsight String? // Analisis AI dari jawaban
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekStart]) // Satu refleksi per minggu
+  @@map("reflections")
+}
+
+// Model AiCoachLog untuk pesan AI coach
+model AiCoachLog {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String // "motivation", "adjustment", "celebration"
+  message   String // Pesan dari AI
+  context   Json? // Data konteks tambahan
+  sent      Boolean   @default(false)
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  // Relasi
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_coach_logs")
+}

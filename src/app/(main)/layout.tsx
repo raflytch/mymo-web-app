@@ -1,7 +1,10 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ReactQueryProvider } from "@/providers/react-query-provider";
-import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "MyMo - AI Habit Tracker",
+  description: "Pelacak kebiasaan dengan AI coach personal",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,12 +16,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "MyMo - AI Habit Tracker",
-  description: "Pelacak kebiasaan dengan AI coach personal",
-};
-
-export default function RootLayout({
+export default function MainLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -28,8 +26,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* Wrap children dengan ReactQueryProvider untuk SSR support */}
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        {children}
       </body>
     </html>
   );
